@@ -1,9 +1,9 @@
 version: "3.9"
 
 services:
-  driver-monitor:
+  fastapi-app:
     build: .
-    container_name: driver-monitor-api
+    container_name: fastapi-dlib
     ports:
       - "8000:8000"
     volumes:

@@ -1,30 +1,31 @@
-FROM python:3.10
+FROM python:3.10-slim
 
-# Cập nhật hệ thống và cài các gói cần thiết
+# Cài các gói hệ thống cần thiết để build dlib
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
-    libgtk2.0-dev \
+    python3-dev \
     libboost-all-dev \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
+    libopenblas-dev \
+    liblapack-dev \
+    libx11-dev \
+    libgtk-3-dev \
+    libjpeg-dev \
+    libpng-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Tạo thư mục làm việc
 WORKDIR /app
 
-# Sao chép requirements trước để cache việc cài thư viện nếu code không đổi
+# Copy requirements và code
 COPY requirements.txt .
-
-# Cài các thư viện Python (ưu tiên dlib trước để cache layer nặng nhất)
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Sao chép toàn bộ mã nguồn
 COPY . .
 
-# Expose cổng FastAPI
+# Cài thư viện Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Mở cổng 8000
 EXPOSE 8000
 
-# Khởi chạy FastAPI
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Chạy FastAPI server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
