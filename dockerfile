@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.10
 
 # Cài các gói hệ thống cần thiết để build dlib
 RUN apt-get update && apt-get install -y \
@@ -18,14 +18,15 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy requirements và code
-COPY requirements.txt .
+COPY requirements.txt . 
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-# Cài thư viện Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Cổng Render sẽ cấp qua biến môi trường PORT
+ENV PORT=10000 
 
-# Mở cổng 8000
-EXPOSE 8000
+# Mở cổng (tùy chọn, không bắt buộc trong Dockerfile nhưng tốt để tài liệu rõ ràng)
+EXPOSE $PORT
 
-# Chạy FastAPI server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Chạy Uvicorn, lấy PORT từ biến môi trường do Render cung cấp
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
