@@ -1,15 +1,25 @@
-FROM danielgatis/dlib:python3.10
+FROM python:3.10-slim
 
-# Tạo thư mục làm việc
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    libboost-all-dev \
+    libopenblas-dev \
+    liblapack-dev \
+    libx11-dev \
+    libgtk-3-dev \
+    libjpeg-dev \
+    libpng-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy requirements và code
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
 
-# Mở cổng (Render sẽ tự set $PORT nên dùng biến môi trường)
 EXPOSE 8000
 
-# Chạy FastAPI server với biến $PORT của Render
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
