@@ -1,16 +1,17 @@
-from fastapi import FastAPI, UploadFile, File, WebSocket
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 import cv2
 import numpy as np
 import mediapipe as mp
+import base64
 from scipy.spatial import distance as dist
 import time
 
 app = FastAPI()
 
 # Ngưỡng và thông số
-NGUONG_MAT_NHAM = 0.25
-NGUONG_NGAP = 0.75
+NGUONG_MAT_NHAM = 0.15
+NGUONG_NGAP = 0.85
 
 # Mediapipe
 mp_face_mesh = mp.solutions.face_mesh
@@ -56,9 +57,6 @@ def xu_ly_anh(image_np):
 async def index():
     return "{Status: Running}"
 
-@app.get("/hello/")
-async def hello_text():
-    return "Hello"
 # Endpoint REST API
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
@@ -68,13 +66,23 @@ async def predict(file: UploadFile = File(...)):
     result = xu_ly_anh(image_np)
     return JSONResponse(content=result)
 
-# WebSocket
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_bytes()
-        np_arr = np.frombuffer(data, np.uint8)
-        image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-        result = xu_ly_anh(image_np)
-        await websocket.send_json(result)
+    try:
+        while True:
+            data = await websocket.receive_bytes()
+
+            # Convert bytes to image
+            np_arr = np.frombuffer(data, np.uint8)
+            image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+            
+            if image_np is None:
+                await websocket.send_json({"error": "Invalid image"})
+                continue
+
+            # Process image
+            result = xu_ly_anh(image_np)
+            await websocket.send_json(result)
+    except WebSocketDisconnect:
+        print("Client disconnected")
