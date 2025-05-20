@@ -11,7 +11,7 @@ app = FastAPI()
 
 # Ngưỡng và thông số
 NGUONG_MAT_NHAM = 0.15
-NGUONG_NGAP = 0.85
+NGUONG_NGAP = 1
 
 # Mediapipe
 mp_face_mesh = mp.solutions.face_mesh
@@ -53,9 +53,19 @@ def xu_ly_anh(image_np):
             }
     return {"error": "No face"}
 
+# API Endpoints
+# 
+# https://courses.ctda.hcmus.edu.vn/login -> response
+
+
 @app.get("/")
 async def index():
     return "{Status: Running}"
+
+users = ["thuan", "khoa"]
+@app.get("/users")
+async def get_users():
+    return users
 
 # Endpoint REST API
 @app.post("/predict/")
@@ -65,6 +75,7 @@ async def predict(file: UploadFile = File(...)):
     image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
     result = xu_ly_anh(image_np)
     return JSONResponse(content=result)
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
